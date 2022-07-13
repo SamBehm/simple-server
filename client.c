@@ -14,7 +14,7 @@
 #include <errno.h>
 
 
-#define PORT 80
+#define PORT 18000
 #define SA struct sockaddr
 #define MAX_STR 1000
 
@@ -48,9 +48,9 @@ int main(int argc, char** argv) {
     servaddr.sin_port = htons(PORT); // big-endian stuff
 
     // Attempt to convert IP address to binary representation
-    if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) < 0) {
-        fprintf(stderr, "Could not convert IP address to binary. \
-                Terminating.\n");
+    if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0) {
+        fprintf(stderr, "Could not convert IP address to binary. "
+                "Terminating.\n");
         fflush(stderr);
         exit(1);
     }
@@ -76,17 +76,23 @@ int main(int argc, char** argv) {
     memset(receive, 0, MAX_STR);
     while ((n = read(sockfd, receive, MAX_STR-1)) > 0) {
         printf("%s", receive);
+        if (receive[n - 1] == '\n') {
+            break;
+        }
         memset(receive, 0, MAX_STR); // again, make sure no information is
                                      // repeated and null terminate your
                                      // strings
     }
-
+    
     if (n < 0) {
-        fprintf(stderr, "Error while reading. Terminating\n");
+        fprintf(stderr, "Error while reading / Nothing was read. "
+                "Terminating\n");
+        fprintf(stderr, "n = %i\n", n);
         fflush(stderr);
         exit(3);
     }
 
     // DONE!!
+    close(sockfd);
     exit(0);
 }
